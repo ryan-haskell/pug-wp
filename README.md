@@ -1,5 +1,5 @@
 # Pug WP
-> A simple site built on top of headless wordpress
+> Simple express site built with Pug, powered by headless Wordpress
 
 
 ### Local Development

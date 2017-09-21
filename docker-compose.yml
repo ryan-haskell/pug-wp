@@ -2,7 +2,7 @@ version: '3'
 services:
 
   cms:
-    image: ryannhg/oni-cms:latest
+    image: ryannhg/wp-cms:latest
     ports:
       - 8080:80
     environment:
@@ -11,7 +11,7 @@ services:
       - db:mysql
 
   db:
-    image: ryannhg/oni-db:latest
+    image: ryannhg/wp-db:latest
     environment:
       MYSQL_ROOT_PASSWORD: password
 
