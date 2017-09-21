@@ -1,0 +1,19 @@
+{
+  "name": "pug-wp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm install && node dist/app.js",
+    "dev": "npm install && nodemon --inspect=0.0.0.0 app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.16.2",
+    "express": "^4.15.4",
+    "morgan": "^1.8.2",
+    "pug": "^2.0.0-rc.4"
+  }
+}

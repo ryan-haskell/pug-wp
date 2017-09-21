@@ -1,0 +1,28 @@
+extends /layout.pug
+
+block content
+  .page.home
+    div( style=`background-image: url(${page.heroSection.image}); background-position: center; background-size: cover; background-attachment: fixed` )
+      .jumbotron.text-light( style="background-color: rgba(0,0,0,.5);  padding-top: 35vmin;" )
+        .container
+          h1.display-3=page.heroSection.title
+          p.lead=page.heroSection.subtitle
+    .container
+
+      section.pt-5
+        h2.h1=page.introSection.header
+        p.mt-3.lead!=page.introSection.paragraph
+
+      section.pt-5
+        h2.h1=page.blogSection.header
+        .row
+          each post in page.blogSection.posts
+            .col-12.col-md-6.col-lg-4
+              .card.mt-5
+                img.card-img-top( src=post.image alt=post.title )
+                .card-body.mt-2
+                  h4.card-title=post.title
+                  h6.card-subtitle.mb-2.text-muted=post.date
+                  p.card-text.pt-3=post.excerpt
+                  .d-flex.justify-content-end
+                    a.btn.btn-primary( href=post.url )=page.blogSection.readMoreLabel

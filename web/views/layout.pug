@@ -1,0 +1,17 @@
+include /partials/navbar.pug
+include /partials/footer.pug
+
+doctype html
+html( lang="en" )
+  head
+    title=page.meta.title
+    meta( name="description" content=page.meta.description )
+    meta( name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" )
+    link( rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" )
+    link( href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" )
+    block styles
+  body
+    +navbar
+    block content
+    +footer
+    block scripts

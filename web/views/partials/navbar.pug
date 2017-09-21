@@ -1,0 +1,9 @@
+mixin navbar
+  nav.navbar.navbar-light.bg-dark
+    .container
+      a.navbar-brand.pt-3.pb-3( href="/" )
+        img( src=site.navbar.brand.image alt=site.navbar.brand.altText )
+      ul.nav.justify-content-end.text-uppercase
+        each link in site.navbar.links
+          li.nav-item( class=(link.url === url) ? "active" : "" )
+            a.nav-link.text-light( href=link.url )=link.label
