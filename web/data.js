@@ -23,26 +23,14 @@ const transformLink = (link) => ({
   label: link.title.rendered
 })
 
-const getProp = (item, props) =>
-  props.reduce((obj, prop) =>
-    (obj !== undefined) ? obj[prop] : obj
-  , item)
-
-const fetchById = (getById) => (props) => (item) =>
-  Promise.all(
-    getProp(item, props).map(id => getById(id))
-  )
-    .then(links => ({
-      item,
-      links
-    }))
+const fetchById = (getById) => (item, ids) =>
+  Promise.all(ids.map(id => getById(id)))
+    .then(links => ({ item, links }))
     .catch(error('fetchById'))
 
 const getLinks = () =>
   axios.get(url + 'links')
-    .then(res => res.data
-      .map(transformLink)
-    )
+    .then(res => res.data.map(transformLink))
     .catch(error('getLinks'))
 
 const getLink = (id) =>
@@ -57,11 +45,11 @@ const fetchLinks =
 const getNavbar = (fetchLinks) =>
   axios.get(url + 'navbars')
     .then(res => res.data[0])
-    .then(fetchLinks(['acf', 'links']))
+    .then(item => fetchLinks(item, item.acf.links))
     .then(({ item, links }) => ({
       brand: {
         image: item.acf.image,
-        alt: item.acf.alt_text
+        altText: item.acf.alt_text
       },
       links
     }))
@@ -70,7 +58,7 @@ const getNavbar = (fetchLinks) =>
 const getFooter = (fetchLinks) =>
   axios.get(url + 'footers')
     .then(res => res.data[0])
-    .then(fetchLinks(['acf', 'links']))
+    .then(item => fetchLinks(item, item.acf.links))
     .then(({ links }) => ({
       links
     }))

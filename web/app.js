@@ -10,7 +10,10 @@ const { port } = {
 const app = express()
 app.use(morgan('tiny'))
 app.set('view engine', 'pug')
-app.set('basedir', './views')
+app.set('pug options', {
+  basedir: './views',
+  pretty: process.env.NODE_ENV !== 'production'
+})
 
 // Routes
 const routes = require('./routes')(app)
