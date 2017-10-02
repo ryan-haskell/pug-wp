@@ -1,20 +1,15 @@
 const axios = require('axios')
 const url = 'http://localhost:8080/wp-json/wp/v2/'
 
-const debug = (prefix) => (thing) => {
-  console.log(prefix, thing)
-  return thing
-}
+// const debug = (prefix) => (thing) => {
+//   console.log(prefix, thing)
+//   return thing
+// }
 
 const error = (prefix) => (reason) => {
   console.error(prefix, reason)
   return reason
 }
-
-const filterByIds = (ids, items) =>
-  ids
-    .map(id => items.filter(item => item.id === id)[0])
-    .filter(item => item !== undefined)
 
 const transformLink = (link) => ({
   id: link.id,
@@ -23,91 +18,103 @@ const transformLink = (link) => ({
   label: link.title.rendered
 })
 
-const fetchById = (getById) => (item, ids) =>
-  Promise.all(ids.map(id => getById(id)))
-    .then(links => ({ item, links }))
-    .catch(error('fetchById'))
-
-const getLinks = () =>
-  axios.get(url + 'links')
-    .then(res => res.data.map(transformLink))
-    .catch(error('getLinks'))
-
-const getLink = (id) =>
-  axios.get(url + 'links/' + id)
-    .then(res => res.data)
-    .then(transformLink)
-    .catch(error('getLink'))
-
-const fetchLinks =
-    fetchById(getLink)
-
-const getNavbar = (fetchLinks) =>
-  axios.get(url + 'navbars')
+const getNavbar = () =>
+  axios.get(url + 'navbars?per_page=1')
     .then(res => res.data[0])
-    .then(item => fetchLinks(item, item.acf.links))
-    .then(({ item, links }) => ({
+    .then(({ acf }) => ({
       brand: {
-        image: item.acf.image,
-        altText: item.acf.alt_text
+        image: acf['image.url'],
+        altText: acf['image.altText']
       },
-      links
+      links: acf.links.map(transformLink)
     }))
     .catch(error('getNavbar'))
 
-const getFooter = (fetchLinks) =>
-  axios.get(url + 'footers')
+const getFooter = () =>
+  axios.get(url + 'footers?per_page=1')
     .then(res => res.data[0])
-    .then(item => fetchLinks(item, item.acf.links))
-    .then(({ links }) => ({
-      links
+    .then(({ acf }) => ({
+      links: acf.links.map(transformLink)
     }))
     .catch(error('getFooter'))
 
-const getBlogPosts = () =>
-  axios.get(url + 'blog-posts')
-    .then(res => res.data
-      .map(({ id, slug, title, acf }) => ({
-        id,
-        slug,
-        title: title.rendered,
-        date: acf.date,
-        excerpt: acf.excerpt,
-        image: acf.image,
-        url: `/blog/${slug}`
-      }))
-    )
-    .catch(error('getBlogPosts'))
+const transformBlogPost = ({ id, slug, title, acf }) => ({
+  id,
+  slug,
+  title: title.rendered,
+  date: acf.date,
+  excerpt: acf.content.substring(0, 125) + '...',
+  content: acf.content,
+  image: acf.image,
+  url: `/blog/${slug}`
+})
 
-const getHomepageSettings = (posts) =>
-  axios.get(url + 'homepages')
+const getLatestBlogPosts = (limit) =>
+    axios.get(url + 'blog-posts?order=asc&per_page=' + limit)
+      .then(res => res.data.map(transformBlogPost))
+      .catch(error('getLatestBlogPosts'))
+
+const getBlogPost = (slug) =>
+  axios.get(url + 'blog-posts?slug=' + slug)
+    .then(res => res.data[0])
+    .then(transformBlogPost)
+    .catch(error('getBlogPost'))
+
+const mapMeta = (acf) => ({
+  title: acf['meta.title'],
+  description: acf['meta.description']
+})
+
+const mapHero = (acf) => ({
+  title: acf['hero.header'],
+  image: acf['hero.image']
+})
+
+const getHomepageSettings = (latestPosts) =>
+  axios.get(url + 'homepages?per_page=1')
     .then(res => res.data[0])
     .then(({ acf }) => ({
-      meta: {
-        title: acf['meta.title'],
-        description: acf['meta.description']
-      },
-      heroSection: {
-        title: acf['hero.title'],
-        subtitle: acf['hero.subtitle'],
-        image: acf['hero.image']
-      },
+      meta: mapMeta(acf),
+      heroSection: mapHero(acf),
       introSection: {
         header: acf['intro.header'],
         paragraph: acf['intro.paragraph']
       },
       blogSection: {
         header: acf['posts.header'],
-        readMoreLabel: acf['posts.button_label'],
-        posts: filterByIds(acf['posts.posts'], posts)
+        posts: latestPosts
       }
     }))
     .catch(error('getHomepageSettings'))
 
+const getBlogLandingSettings = (latestPosts) =>
+  axios.get(url + 'blog-landing-settings?per_page=1')
+    .then(res => res.data[0])
+    .then(({ acf }) => ({
+      meta: mapMeta(acf),
+      heroSection: mapHero(acf),
+      latestPosts
+    }))
+    .catch(error('getBlogLandingSettings'))
+
+const getBlogDetailPageSettings = () =>
+  axios.get(url + 'blog-detail-settings?per_page=1')
+    .then(res => res.data[0])
+    .catch(error('getBlogDetailPageSettings'))
+
+const getAboutPageSettings = () =>
+  axios.get(url + 'about-us-settings?per_page=1')
+    .then(res => res.data[0])
+    .then(({ acf }) => ({
+      meta: mapMeta(acf),
+      heroSection: mapHero(acf)
+    }))
+    .catch(error('getAboutPageSettings'))
+
 const getSiteSettings = () =>
   Promise.all([
-    getNavbar(fetchLinks),
-    getFooter(fetchLinks)
+    getNavbar(),
+    getFooter()
   ])
     .then(([ navbar, footer ]) => ({
       navbar,
@@ -116,11 +123,40 @@ const getSiteSettings = () =>
     .catch(error('getSiteSettings'))
 
 const getHomepage = () =>
-  getBlogPosts()
+  getLatestBlogPosts(3)
     .then(getHomepageSettings)
     .catch(error('getHomepage'))
 
+const getBlogLandingPage = () =>
+  getLatestBlogPosts(5)
+    .then(getBlogLandingSettings)
+    .catch(error('getBlogLandingPage'))
+
+const getBlogDetailPage = (id) =>
+  Promise.all([
+    getBlogDetailPageSettings(),
+    getBlogPost(id)
+  ])
+    .then(([ settings, post ]) => ({
+      settings,
+      post,
+      meta: {
+        title: mapMeta(settings.acf).title
+          .split('{{title}}').join(post.title),
+        description: mapMeta(settings.acf).description
+          .split('{{excerpt}}').join(post.excerpt)
+      }
+    }))
+    .catch(error('getBlogDetailPage'))
+
+const getAboutPage = () =>
+  getAboutPageSettings()
+    .catch(error('getAboutPage'))
+
 module.exports = {
   getSiteSettings,
-  getHomepage
+  getHomepage,
+  getBlogLandingPage,
+  getBlogDetailPage,
+  getAboutPage
 }

@@ -1,4 +1,10 @@
-const { getSiteSettings, getHomepage } = require('./data')
+const {
+  getSiteSettings,
+  getHomepage,
+  getBlogDetailPage,
+  getBlogLandingPage,
+  getAboutPage
+} = require('./data')
 
 const setKeysFrom = (someObj) => (obj, key) => {
   obj[key] = someObj[key]
@@ -23,6 +29,41 @@ module.exports = (app) => {
       ])
         .then(([ site, page ]) =>
           render(res, 'home', {
+            site,
+            page
+          })
+        ),
+    blog: {
+      landing: (req, res) =>
+        Promise.all([
+          getSiteSettings(),
+          getBlogLandingPage()
+        ])
+          .then(([ site, page ]) =>
+            render(res, 'blog/landing', {
+              site,
+              page
+            })
+          ),
+      detail: (req, res) =>
+        Promise.all([
+          getSiteSettings(),
+          getBlogDetailPage(req.params.slug)
+        ])
+          .then(([ site, page ]) =>
+            render(res, 'blog/detail', {
+              site,
+              page
+            })
+          )
+    },
+    aboutUs: (req, res) =>
+      Promise.all([
+        getSiteSettings(),
+        getAboutPage()
+      ])
+        .then(([ site, page ]) =>
+          render(res, 'about-us', {
             site,
             page
           })

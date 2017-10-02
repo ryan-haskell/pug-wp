@@ -2,16 +2,23 @@ version: '3'
 services:
 
   cms:
-    image: ryannhg/wp-cms:latest
+    build:
+      context: ./cms
+      dockerfile: Dockerfile
+    image: ryannhg/wp-cms
     ports:
       - 8080:80
     environment:
       WORDPRESS_DB_PASSWORD: password
+      WP_SITE_TITLE: Wordpress
+      WP_ADMIN_USER: admin
+      WP_ADMIN_EMAIL: admin@demo.com
+      WP_ADMIN_PASSWORD: password
     links:
       - db:mysql
 
   db:
-    image: ryannhg/wp-db:latest
+    image: mariadb
     environment:
       MYSQL_ROOT_PASSWORD: password
 

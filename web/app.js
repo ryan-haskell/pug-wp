@@ -20,5 +20,10 @@ const routes = require('./routes')(app)
 
 app.get('/', routes.home)
 
+app.get('/blog', routes.blog.landing)
+app.get('/blog/:slug', routes.blog.detail)
+
+app.get('/about-us', routes.aboutUs)
+
 // Start web server
 app.listen(port, () => console.info(`Ready at http://localhost:${port}`))
