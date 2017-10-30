@@ -1,28 +1,29 @@
 extends /layout.pug
 
 block content
-  .page.home
-    div( style=`background-image: url(${page.heroSection.image}); background-position: center; background-size: cover; background-attachment: fixed` )
-      .jumbotron.text-light( style="background-color: rgba(0,0,0,.5);  padding-top: 35vmin;" )
-        .container
-          h1.display-3=page.heroSection.title
-          p.lead=page.heroSection.subtitle
-    .container
+  //- Hero Section
+  section.hero
+    h1( style="display: none;" )=page.meta.title
+    img.hero__image( v-fade-image="'hero__image--ready'" src=page.heroSection.image.url alt=page.heroSection.image.altText )
+    .hero__content.container
+      h2.hero__title=page.heroSection.title
+      if page.heroSection.subtitle
+        p.hero__subtitle=page.heroSection.subtitle
+  //- Intro Section
+  section.section
+    h3.section__title=page.introSection.header
+    .section__content!=page.introSection.paragraph
+  //- Latest posts
+  section.section
+    h3.section__title=page.blogSection.header
+    .cards
+      each post in page.blogSection.posts
+        a.card( href=post.url )
+          .card__image-container
+            img.card__image( v-fade-image="'card__image--ready'" src=post.image.url alt=post.image.altText )
+          h4.card__title=post.title
+          p.card__subtitle=post.date
+          .card__content!=post.excerpt
 
-      section.pt-5
-        h2.h1=page.introSection.header
-        .mt-3.lead!=page.introSection.paragraph
-
-      section.pt-5
-        h2.h1=page.blogSection.header
-        .row
-          each post in page.blogSection.posts
-            .col-12.col-md-6.col-lg-4
-              .card.mt-5
-                img.card-img-top( src=post.image alt=post.title )
-                .card-body.mt-2
-                  h4.card-title=post.title
-                  h6.card-subtitle.mb-2.text-muted=post.date
-                  p.card-text.pt-3=post.excerpt
-                  .d-flex.justify-content-end
-                    a.btn.btn-primary( href=post.url )=page.blogSection.readMoreLabel
+block scripts
+  script( src="/public/scripts/pages/home.js" )

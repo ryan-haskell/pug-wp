@@ -1,17 +1,22 @@
 include /partials/navbar.pug
 include /partials/footer.pug
+include /partials/meta.pug
 
 doctype html
 html( lang="en" )
   head
-    title=page.meta.title
-    meta( name="description" content=page.meta.description )
-    meta( name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" )
-    link( rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" )
-    link( href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" )
+    +meta(page.meta)
+    meta( name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" )
+    link( rel="icon" href=site.favicon )
+    link( rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:300,300i,400,400i,700,700i" )
+    link( rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" )
+    link( rel="stylesheet" href="/public/main.css" )
     block styles
   body
-    +navbar
-    block content
-    +footer
+    +navbar(site.navbar)
+    .page#app
+      block content
+    +footer(site.footer)
+    script( src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.2/vue.js" )
+    script( src="/public/scripts/main.js" )
     block scripts

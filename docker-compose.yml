@@ -9,6 +9,8 @@ services:
     ports:
       - 8080:80
     environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_USER: root
       WORDPRESS_DB_PASSWORD: password
       WP_SITE_TITLE: Wordpress
       WP_ADMIN_USER: admin
@@ -28,6 +30,10 @@ services:
   #     dockerfile: Dockerfile
   #   ports:
   #     - 3000:3000
+  #   environment:
+  #     DB_HOST: db
+  #     DB_USER: root
+  #     DB_PASSWORD: password
   #   volumes:
   #     - ./web:/usr/src/app
   #   links:

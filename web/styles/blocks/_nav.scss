@@ -1,0 +1,31 @@
+.nav {
+
+    position: fixed;
+    z-index: 2;
+    background-color: #333;
+    width: 100%;
+    padding: 1rem;
+    
+    &__container {
+        display: flex;
+        align-items: center;
+    }
+
+    &__links {
+        flex: 1;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    &__link {
+        color: white;
+        font-size: 1.25rem;
+        margin-left: 1rem;
+        text-transform: uppercase;
+    }
+    
+    &__brand-image {
+        max-height: 3rem;
+    }
+    
+}

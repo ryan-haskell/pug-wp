@@ -1,8 +1,7 @@
-mixin footer
-  footer.navbar.bg-dark.mt-5
-    .container.d-flex.justify-content-end
-      ul.nav
-        each link in site.footer.links
-          li.nav-item
-            a.h1.nav-link.text-light( href=link.url )
-              i.fa( class=`fa-${link.icon}` )
+mixin footer(footer)
+  footer.footer
+    .container
+      .footer__links
+        each link in footer.links
+          a.footer__link( href=link.url )
+              i.footer__link-icon.fa( class=`fa-${link.icon}` )
