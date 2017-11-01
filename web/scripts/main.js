@@ -7,3 +7,14 @@ Vue.directive('fade-image', {
     }
   }
 })
+
+const Navbar = Vue.component('navbar', {
+  data: () => ({
+    isMenuOpen: false
+  }),
+  methods: {
+    toggleMenu () {
+      this.isMenuOpen = !this.isMenuOpen
+    }
+  }
+})

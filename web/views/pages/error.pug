@@ -1,4 +1,8 @@
-h1='Oops! Something went wrong...'
+extends /layout.pug
 
-script( type="text/javascript" ).
-  console.error('Error', JSON.parse('!{ reason }'))
+block content
+  h1='Oops! Something went wrong...'
+
+block scripts
+  script( type="text/javascript" ).
+    console.error('Error', JSON.parse('!{ reason }'))

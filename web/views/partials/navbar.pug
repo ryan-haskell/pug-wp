@@ -1,8 +1,14 @@
 mixin navbar(navbar)
-  nav.nav
-    .container.nav__container
-      a.nav__brand.link( href="/" )
-        img.nav__brand-image( src=navbar.brand.image alt=navbar.brand.altText )
-      .nav__links
-        each link in navbar.links
-          a.nav__link.link( class=(link.url === url ? "nav__link--active" : "") href=link.url )=link.label
+  div( is="navbar" inline-template )
+    nav.nav
+      .container.nav__container
+        a.nav__brand.link( href="/" )
+          img.nav__brand-image( src=navbar.brand.image alt=navbar.brand.altText )
+        .nav__mobile-menu
+          button.nav__mobile-icon.fa(
+            v-on:click="toggleMenu()"
+            v-bind:class="isMenuOpen ? 'fa-close' : 'fa-bars'"
+          )
+        .nav__links( v-bind:class="{ 'nav__links--visible': isMenuOpen }" )
+          each link in navbar.links
+            a.nav__link.link( class=(link.url === url ? "nav__link--active" : "") href=link.url )=link.label

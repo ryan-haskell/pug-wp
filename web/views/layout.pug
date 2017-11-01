@@ -13,10 +13,11 @@ html( lang="en" )
     link( rel="stylesheet" href="/public/main.css" )
     block styles
   body
-    +navbar(site.navbar)
-    .page#app
-      block content
-    +footer(site.footer)
+    #app
+      +navbar(site.navbar)
+      .page
+        block content
+      +footer(site.footer)
     script( src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.2/vue.js" )
     script( src="/public/scripts/main.js" )
     block scripts
