@@ -29,6 +29,7 @@
     }
 
     &__title {
+        font-weight: lighter;
         font-size: 2rem;
     }
 
@@ -36,8 +37,8 @@
         font-size: 1.5rem;
     }
     
-    @include respond-to(medium) {
-        padding-top: 12rem;
+    @include respond-to(small) {
+        padding-top: 24rem;
         padding-bottom: 4rem;
         
         &__title {

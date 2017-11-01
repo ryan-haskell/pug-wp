@@ -1,0 +1,10 @@
+.image {
+    opacity: 0;
+    transform: scale(1.2);
+    transition: opacity .3s ease-in-out, transform .3s ease-in-out;
+
+    &--ready {
+        opacity: 1;
+        transform: none;
+    }
+}

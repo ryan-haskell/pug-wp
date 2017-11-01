@@ -3,12 +3,22 @@ const {
   getHomepage,
   getBlogDetailPage,
   getBlogLandingPage,
-  getAboutPage
+  getGeneralPage,
+  getGeneralSection
 } = require('./data')
 
 module.exports = (app) => {
   const render = (res, page, locals) =>
     res.render(`pages/${page}`, Object.assign(locals, app.get('pug options')))
+
+  const renderPage = (res, pageFilename) => ([ site, page ]) =>
+    render(res, pageFilename, { site, page })
+
+  const renderErrorPage = (res) => (reason) =>
+    render(res, 'error', { reason })
+
+  const renderNotFoundPage = (res) => (reason) =>
+    render(res, 'not-found', { reason })
 
   return {
 
@@ -17,12 +27,8 @@ module.exports = (app) => {
         getSiteSettings(),
         getHomepage()
       ])
-        .then(([ site, page ]) =>
-          render(res, 'home', {
-            site,
-            page
-          })
-        ),
+        .then(renderPage(res, 'home'))
+        .catch(renderErrorPage(res)),
 
     blog: {
 
@@ -31,38 +37,37 @@ module.exports = (app) => {
           getSiteSettings(),
           getBlogLandingPage()
         ])
-          .then(([ site, page ]) =>
-            render(res, 'blog/landing', {
-              site,
-              page
-            })
-          ),
+          .then(renderPage(res, 'blog/landing'))
+          .catch(renderErrorPage(res)),
 
-      detail: (req, res) =>
+      detail: (slug) => (req, res) =>
         Promise.all([
           getSiteSettings(),
-          getBlogDetailPage(req.params.slug)
+          getBlogDetailPage(req.params[slug])
         ])
-          .then(([ site, page ]) =>
-            render(res, 'blog/detail', {
-              site,
-              page
-            })
-          )
+          .then(renderPage(res, 'blog/detail'))
+          .catch(renderNotFoundPage(res))
 
     },
 
-    aboutUs: (req, res) =>
+    page: (page) => (req, res) =>
       Promise.all([
         getSiteSettings(),
-        getAboutPage()
+        getGeneralPage(req.params[page])
       ])
-        .then(([ site, page ]) =>
-          render(res, 'about-us', {
-            site,
-            page
-          })
-        )
+        .then(renderPage(res, 'page'))
+        .catch(renderNotFoundPage(res)),
+
+    section: (page, section) => (req, res) =>
+      Promise.all([
+        getSiteSettings(),
+        getGeneralSection(req.params[page], req.params[section])
+      ])
+        .then(renderPage(res, 'section'))
+        .catch(renderNotFoundPage(res)),
+
+    notFound: (req, res) =>
+      renderNotFoundPage(res)()
 
   }
 }

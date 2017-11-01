@@ -3,5 +3,5 @@ mixin footer(footer)
     .container
       .footer__links
         each link in footer.links
-          a.footer__link( href=link.url )
-              i.footer__link-icon.fa( class=`fa-${link.icon}` )
+          a.footer__link.link( target="_blank" href=link.url )
+              i.footer__link-icon.fa( class=`${link.icon}` )

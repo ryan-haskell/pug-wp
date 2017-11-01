@@ -1,0 +1,17 @@
+.footer {
+
+    padding: 3rem 1rem;
+    color: #333;
+
+    &__links {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    &__link {
+        font-size: 2rem;
+        margin-right: 1rem;
+        color: #333;
+    }
+
+}

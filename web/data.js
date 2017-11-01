@@ -6,9 +6,15 @@ const url = 'http://localhost:8080/wp-json/wp/v2/'
 //   return thing
 // }
 
-const grabAll = (res) => res.data
+const grabAll = (res) =>
+  (res && res.data)
+    ? Promise.resolve(res.data)
+    : Promise.reject(new Error('Could not grab all results.'))
 
-const grabFirst = (res) => res.data[0]
+const grabFirst = (res) =>
+  (res && res.data && res.data[0])
+    ? Promise.resolve(res.data[0])
+    : Promise.reject(new Error('Could not grab first result.'))
 
 const map = (fn) => (list) => list.map(fn)
 
@@ -17,13 +23,16 @@ const error = (prefix) => (reason) => {
   return reason
 }
 
-const separateUnitsWithDash = (date) =>
-  date.split('').map((num, i) => (i === 4 || i === 6) ? `-${num}` : num ).join('')
+const rejectWithError = (prefix) => (reason) =>
+  Promise.reject(error(prefix)(reason))
 
-const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const separateUnitsWithDash = (date) =>
+  date.split('').map((num, i) => (i === 4 || i === 6) ? `-${num}` : num).join('')
+
+// const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'Novmeber', 'December']
 
-// 20151115
+// 20151115 --> 2015-11-15
 const formatDate = (wpDate) => {
   const date = new Date(separateUnitsWithDash(wpDate))
   const month = months[date.getMonth()]
@@ -85,20 +94,31 @@ const transformBlogPost = ({ id, slug, title, acf }) => ({
   date: formatDate(acf.date),
   excerpt: acf.excerpt,
   content: acf.content,
-  image: acf.image,
+  image: {
+    url: acf.image,
+    // TODO: Alt text
+    altText: 'Post preview image'
+  },
   url: `/blog/${slug}`
 })
 
 const getLatestBlogPosts = (limit) =>
-    axios.get(url + 'blog-posts?order=asc&per_page=' + limit)
-      .then(grabAll)
-      .then(map(transformBlogPost))
-      .catch(error('getLatestBlogPosts'))
+  axios.get(`${url}blog-posts?order=asc&per_page=${limit}`)
+    .then(grabAll)
+    .then(map(transformBlogPost))
+    .catch(error('getLatestBlogPosts'))
 
 const getBlogPost = (slug) =>
-  axios.get(url + 'blog-posts?slug=' + slug)
+  axios.get(`${url}blog-posts?slug=${slug}&per_page=1`)
     .then(grabFirst)
     .then(transformBlogPost)
+    .then((post) => ({
+      ...post,
+      meta: {
+        title: post.title,
+        description: post.description
+      }
+    }))
     .catch(error('getBlogPost'))
 
 const mapMeta = (acf) => ({
@@ -126,35 +146,62 @@ const getHomepageSettings = (latestPosts) =>
         paragraph: acf['intro.content']
       },
       blogSection: {
-        header: acf['posts.header'],
+        header: acf['latestPosts.header'],
         posts: latestPosts
       }
     }))
     .catch(error('getHomepageSettings'))
 
-const getBlogLandingSettings = (latestPosts) =>
+const getBlogLandingSettings = () =>
   axios.get(url + 'blog-landing-settings?per_page=1')
-    .then(grabFirst)
-    .then(({ acf }) => ({
-      meta: mapMeta(acf),
-      heroSection: mapHero(acf),
-      latestPosts
-    }))
-    .catch(error('getBlogLandingSettings'))
-
-const getBlogDetailPageSettings = () =>
-  axios.get(url + 'blog-detail-settings?per_page=1')
-    .then(grabFirst)
-    .catch(error('getBlogDetailPageSettings'))
-
-const getAboutPageSettings = () =>
-  axios.get(url + 'about-us-settings?per_page=1')
     .then(grabFirst)
     .then(({ acf }) => ({
       meta: mapMeta(acf),
       heroSection: mapHero(acf)
     }))
-    .catch(error('getAboutPageSettings'))
+    .catch(error('getBlogLandingSettings'))
+
+const filterByIds = (ids) => (posts) =>
+    posts.filter(post => ids.indexOf(post.ID) !== -1)
+
+const getGeneralSections = (page, sectionIds) =>
+  axios.get(`${url}sections/${page}`)
+    .then(filterByIds(sectionIds))
+    .catch(error('getGeneralSections'))
+
+const getGeneralPageSettings = (page) =>
+  axios.get(`${url}page-settings?slug=${page}&per_page=1`)
+    .then(grabFirst)
+    .then(page => Promise.all([
+      Promise.resolve(page),
+      getGeneralSections(page.acf.sections)
+    ]))
+    .then(([{ title, acf }, sections]) => ({
+      title: title.rendered,
+      meta: {
+        title: title.rendered,
+        description: acf.description
+      },
+      heroSection: {
+        ...mapHero(acf),
+        title: title.rendered
+      },
+      content: acf.content,
+      sections
+    }))
+    .catch(rejectWithError(`getGeneralPageSettings: ${page}`))
+
+const getGeneralSectionSettings = (page, section) =>
+  axios.get(`${url}sections${page}?slug=${section}&per_page=1`)
+    .then(grabFirst)
+    .then(({ title, acf }) => ({
+      title: title.rendered,
+      meta: {
+        title: title.rendered,
+        description: acf.description
+      },
+      content: acf.content
+    }))
 
 const getSiteSettings = () =>
   Promise.all([
@@ -170,40 +217,44 @@ const getSiteSettings = () =>
     .catch(error('getSiteSettings'))
 
 const getHomepage = () =>
-  getLatestBlogPosts(3)
-    .then(getHomepageSettings)
+  Promise.all([
+    getLatestBlogPosts(3),
+    getHomepageSettings()
+  ])
+    .then(([ latestPosts, page ]) => ({
+      ...page,
+      latestPosts
+    }))
     .catch(error('getHomepage'))
 
 const getBlogLandingPage = () =>
-  getLatestBlogPosts(5)
-    .then(getBlogLandingSettings)
+    Promise.all([
+      getLatestBlogPosts(5),
+      getBlogLandingSettings()
+    ])
+    .then(([ latestPosts, page ]) => ({
+      ...page,
+      latestPosts
+    }))
     .catch(error('getBlogLandingPage'))
 
 const getBlogDetailPage = (id) =>
-  Promise.all([
-    getBlogDetailPageSettings(),
-    getBlogPost(id)
-  ])
-    .then(([ settings, post ]) => ({
-      settings,
-      post,
-      meta: {
-        title: mapMeta(settings.acf).title
-          .split('{{title}}').join(post.title),
-        description: mapMeta(settings.acf).description
-          .split('{{excerpt}}').join(post.excerpt)
-      }
-    }))
+  getBlogPost(id)
     .catch(error('getBlogDetailPage'))
 
-const getAboutPage = () =>
-  getAboutPageSettings()
-    .catch(error('getAboutPage'))
+const getGeneralPage = (page) =>
+  getGeneralPageSettings(page)
+    .catch(error(`getGeneralPage: ${page}`))
+
+const getGeneralSection = (page, section) =>
+  getGeneralSectionSettings(page, section)
+  .catch(error(`getGeneralSection: ${page}/${section}`))
 
 module.exports = {
   getSiteSettings,
   getHomepage,
   getBlogLandingPage,
   getBlogDetailPage,
-  getAboutPage
+  getGeneralPage,
+  getGeneralSection
 }
