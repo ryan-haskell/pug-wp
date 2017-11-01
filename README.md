@@ -1,5 +1,5 @@
 # Pug WP
-> Simple express site built with Pug, powered by headless Wordpress
+> Simple express site built with Pug, powered by headless Wordpress.
 
 
 ### Local Development
@@ -15,4 +15,4 @@
     - Username: `admin`
     - Password: `password`
 
-1. Go to `http://localhost:5000` for the web frontend
+1. Go to `http://localhost:3000` for the web frontend

@@ -14,11 +14,13 @@ module.exports = (app) => {
   const renderPage = (res, pageFilename) => ([ site, page ]) =>
     render(res, pageFilename, { site, page })
 
-  const renderErrorPage = (res) => (reason) =>
-    render(res, 'error', { reason })
+  const renderErrorPage = (res) => (reason) => {
+    res.status(500)
+    render(res, 'error', { reason: JSON.stringify(reason) })
+  }
 
   const renderNotFoundPage = (res) => (reason) =>
-    render(res, 'not-found', { reason })
+    render(res, 'not-found', { reason: JSON.stringify(reason) })
 
   return {
 
@@ -67,7 +69,10 @@ module.exports = (app) => {
         .catch(renderNotFoundPage(res)),
 
     notFound: (req, res) =>
-      renderNotFoundPage(res)()
+      renderNotFoundPage(res)(),
+
+    error: (err, req, res, next) =>
+      renderErrorPage(res)(err)
 
   }
 }

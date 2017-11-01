@@ -5,9 +5,8 @@
   "repository": "https://github.com/ryannhg/pug-wp",
   "main": "index.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon --inspect=0.0.0.0 app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "gulp & node app.js",
+    "dev": "gulp dev & nodemon --inspect=0.0.0.0 app.js"
   },
   "author": "",
   "license": "ISC",

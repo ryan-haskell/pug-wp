@@ -1,5 +1,5 @@
 const axios = require('axios')
-const url = 'http://localhost:8080/wp-json/wp/v2/'
+const url = 'http://cms/wp-json/wp/v2/'
 
 // const debug = (prefix) => (thing) => {
 //   console.log(prefix, thing)
@@ -48,6 +48,16 @@ const transformLink = (link) => ({
   label: link.title.rendered
 })
 
+const transformSection = ({ title, slug, acf }) => ({
+  title: title.rendered,
+  slug,
+  meta: {
+    title: title.rendered,
+    description: acf.description
+  },
+  content: acf.content
+})
+
 const populateLinks = (prop) => (item) =>
   Promise.all(item.acf[prop].map(id =>
     axios.get(url + 'links/' + id).then(res => res.data)
@@ -56,7 +66,7 @@ const populateLinks = (prop) => (item) =>
       item.acf[prop] = links.map(transformLink)
       return item
     })
-    .catch(error('populateLinks'))
+    .catch(rejectWithError('populateLinks'))
 
 const getGlobalSettings = () =>
   axios.get(url + 'global-settings?per_page=1')
@@ -76,7 +86,7 @@ const getNavbar = () =>
       },
       links: acf.links
     }))
-    .catch(error('getNavbar'))
+    .catch(rejectWithError('getNavbar'))
 
 const getFooter = () =>
   axios.get(url + 'footers?per_page=1')
@@ -85,7 +95,7 @@ const getFooter = () =>
     .then(({ acf }) => ({
       links: acf.links
     }))
-    .catch(error('getFooter'))
+    .catch(rejectWithError('getFooter'))
 
 const transformBlogPost = ({ id, slug, title, acf }) => ({
   id,
@@ -106,7 +116,7 @@ const getLatestBlogPosts = (limit) =>
   axios.get(`${url}blog-posts?order=asc&per_page=${limit}`)
     .then(grabAll)
     .then(map(transformBlogPost))
-    .catch(error('getLatestBlogPosts'))
+    .catch(rejectWithError('getLatestBlogPosts'))
 
 const getBlogPost = (slug) =>
   axios.get(`${url}blog-posts?slug=${slug}&per_page=1`)
@@ -119,7 +129,7 @@ const getBlogPost = (slug) =>
         description: post.description
       }
     }))
-    .catch(error('getBlogPost'))
+    .catch(rejectWithError('getBlogPost'))
 
 const mapMeta = (acf) => ({
   title: acf['meta.title'],
@@ -135,7 +145,7 @@ const mapHero = (acf) => ({
   }
 })
 
-const getHomepageSettings = (latestPosts) =>
+const getHomepageSettings = () =>
   axios.get(url + 'homepages?per_page=1')
     .then(grabFirst)
     .then(({ acf }) => ({
@@ -147,10 +157,10 @@ const getHomepageSettings = (latestPosts) =>
       },
       blogSection: {
         header: acf['latestPosts.header'],
-        posts: latestPosts
+        posts: []
       }
     }))
-    .catch(error('getHomepageSettings'))
+    .catch(rejectWithError('getHomepageSettings'))
 
 const getBlogLandingSettings = () =>
   axios.get(url + 'blog-landing-settings?per_page=1')
@@ -159,22 +169,24 @@ const getBlogLandingSettings = () =>
       meta: mapMeta(acf),
       heroSection: mapHero(acf)
     }))
-    .catch(error('getBlogLandingSettings'))
+    .catch(rejectWithError('getBlogLandingSettings'))
 
 const filterByIds = (ids) => (posts) =>
-    posts.filter(post => ids.indexOf(post.ID) !== -1)
+    posts.filter(post => ids.indexOf(post.id) !== -1)
 
 const getGeneralSections = (page, sectionIds) =>
   axios.get(`${url}sections/${page}`)
+    .then(grabAll)
     .then(filterByIds(sectionIds))
-    .catch(error('getGeneralSections'))
+    .then(map(transformSection))
+    .catch(rejectWithError('getGeneralSections'))
 
-const getGeneralPageSettings = (page) =>
-  axios.get(`${url}page-settings?slug=${page}&per_page=1`)
+const getGeneralPageSettings = (pageName) =>
+  axios.get(`${url}general-pages?slug=${pageName}&per_page=1`)
     .then(grabFirst)
     .then(page => Promise.all([
       Promise.resolve(page),
-      getGeneralSections(page.acf.sections)
+      getGeneralSections(pageName, page.acf.sections)
     ]))
     .then(([{ title, acf }, sections]) => ({
       title: title.rendered,
@@ -189,19 +201,13 @@ const getGeneralPageSettings = (page) =>
       content: acf.content,
       sections
     }))
-    .catch(rejectWithError(`getGeneralPageSettings: ${page}`))
+    .catch(rejectWithError(`getGeneralPageSettings: ${pageName}`))
 
 const getGeneralSectionSettings = (page, section) =>
-  axios.get(`${url}sections${page}?slug=${section}&per_page=1`)
+  axios.get(`${url}sections/${page}?slug=${section}&per_page=1`)
     .then(grabFirst)
-    .then(({ title, acf }) => ({
-      title: title.rendered,
-      meta: {
-        title: title.rendered,
-        description: acf.description
-      },
-      content: acf.content
-    }))
+    .then(transformSection)
+    .catch(rejectWithError(`getGeneralSectionSettings: ${page}, ${section}`))
 
 const getSiteSettings = () =>
   Promise.all([
@@ -214,7 +220,7 @@ const getSiteSettings = () =>
       navbar,
       footer
     }))
-    .catch(error('getSiteSettings'))
+    .catch(rejectWithError('getSiteSettings'))
 
 const getHomepage = () =>
   Promise.all([
@@ -223,9 +229,12 @@ const getHomepage = () =>
   ])
     .then(([ latestPosts, page ]) => ({
       ...page,
-      latestPosts
+      blogSection: {
+        header: page.blogSection.header,
+        posts: latestPosts
+      }
     }))
-    .catch(error('getHomepage'))
+    .catch(rejectWithError('getHomepage'))
 
 const getBlogLandingPage = () =>
     Promise.all([
@@ -236,19 +245,19 @@ const getBlogLandingPage = () =>
       ...page,
       latestPosts
     }))
-    .catch(error('getBlogLandingPage'))
+    .catch(rejectWithError('getBlogLandingPage'))
 
 const getBlogDetailPage = (id) =>
   getBlogPost(id)
-    .catch(error('getBlogDetailPage'))
+    .catch(rejectWithError('getBlogDetailPage'))
 
 const getGeneralPage = (page) =>
   getGeneralPageSettings(page)
-    .catch(error(`getGeneralPage: ${page}`))
+    .catch(rejectWithError(`getGeneralPage: ${page}`))
 
 const getGeneralSection = (page, section) =>
   getGeneralSectionSettings(page, section)
-  .catch(error(`getGeneralSection: ${page}/${section}`))
+    .catch(rejectWithError(`getGeneralSection: ${page}/${section}`))
 
 module.exports = {
   getSiteSettings,

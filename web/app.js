@@ -31,7 +31,11 @@ app.get('/blog/:slug', routes.blog.detail('slug'))
 app.get('/not-found', routes.notFound)
 
 app.get('/:page', routes.page('page'))
-app.get('/:page/:slug', routes.section('page', 'section'))
+app.get('/:page/:section', routes.section('page', 'section'))
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(routes.error)
+}
 
 // Start web server
 app.listen(port, () =>

@@ -1,6 +1,11 @@
 version: '3'
 services:
 
+  db:
+    image: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+
   cms:
     build:
       context: ./cms
@@ -8,6 +13,8 @@ services:
     image: ryannhg/wp-cms
     ports:
       - 8080:80
+    volumes:
+      - ./cms/plugins/rest-api-cors:/var/www/html/wp-content/plugins/rest-api-cors
     environment:
       WORDPRESS_DB_HOST: mysql
       WORDPRESS_DB_USER: root
@@ -19,22 +26,22 @@ services:
     links:
       - db:mysql
 
-  db:
-    image: mariadb
-    environment:
-      MYSQL_ROOT_PASSWORD: password
-
-  # web:
-  #   build:
-  #     context: ./web
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - 3000:3000
-  #   environment:
-  #     DB_HOST: db
-  #     DB_USER: root
-  #     DB_PASSWORD: password
-  #   volumes:
-  #     - ./web:/usr/src/app
-  #   links:
-  #     - cms:cms
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+      - 9229:9229
+    volumes:
+      - ./web/scripts:/usr/src/app/scripts
+      - ./web/styles:/usr/src/app/styles
+      - ./web/views:/usr/src/app/views
+      - ./web/app.js:/usr/src/app/app.js
+      - ./web/data.js:/usr/src/app/data.js
+      - ./web/gulpfile.js:/usr/src/app/gulpfile.js
+      - ./web/routes.js:/usr/src/app/routes.js
+      - ./web/package.json:/usr/src/app/package.json
+      - ./web/package-lock.json:/usr/src/app/package-lock.json
+    links:
+      - cms:cms

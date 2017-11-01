@@ -14,6 +14,7 @@ wp --allow-root plugin install acf-to-rest-api --version=2.2.1 --activate
 wp --allow-root plugin install advanced-custom-fields --version=4.4.12 --activate
 wp --allow-root plugin install custom-post-type-ui --version=1.5.5 --activate
 wp --allow-root plugin install admin-menu-editor --version=1.8 --activate
+wp --allow-root plugin activate rest-api-cors
 
 # Allow wordpress to modify its stuff
 chown -R www-data:www-data /var/www/html
