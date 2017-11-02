@@ -51,10 +51,8 @@ const transformLink = (link) => ({
 const transformSection = ({ title, slug, acf }) => ({
   title: title.rendered,
   slug,
-  meta: {
-    title: title.rendered,
-    description: acf.description
-  },
+  meta: mapMeta(acf),
+  preview: acf.previewContent,
   content: acf.content
 })
 
@@ -171,13 +169,24 @@ const getBlogLandingSettings = () =>
     }))
     .catch(rejectWithError('getBlogLandingSettings'))
 
-const filterByIds = (ids) => (posts) =>
-    posts.filter(post => ids.indexOf(post.id) !== -1)
+const filterAndSortByIds = (ids) => (posts) =>
+    posts
+      .map(post => (ids.indexOf(post.id) !== -1)
+        ? { post, order: ids.indexOf(post.id) }
+        : undefined
+      )
+      .filter(a => a !== undefined)
+      .sort((a, b) =>
+        (a.order < b.order) ? -1
+        : (a.order > b.order) ? 1
+        : 0
+      )
+      .map(({ post }) => post)
 
 const getGeneralSections = (page, sectionIds) =>
   axios.get(`${url}sections/${page}`)
     .then(grabAll)
-    .then(filterByIds(sectionIds))
+    .then(filterAndSortByIds(sectionIds))
     .then(map(transformSection))
     .catch(rejectWithError('getGeneralSections'))
 
@@ -188,16 +197,15 @@ const getGeneralPageSettings = (pageName) =>
       Promise.resolve(page),
       getGeneralSections(pageName, page.acf.sections)
     ]))
-    .then(([{ title, acf }, sections]) => ({
+    .then(([{ title, slug, acf }, sections]) => ({
       title: title.rendered,
-      meta: {
-        title: title.rendered,
-        description: acf.description
-      },
+      slug: slug,
+      meta: mapMeta(acf),
       heroSection: {
         ...mapHero(acf),
         title: title.rendered
       },
+      header: acf.header,
       content: acf.content,
       sections
     }))

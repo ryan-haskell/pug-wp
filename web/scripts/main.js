@@ -18,3 +18,11 @@ const Navbar = Vue.component('navbar', {
     }
   }
 })
+
+var vm = new Vue({
+  el: '#app',
+  components: {
+    Navbar
+  },
+  data: {}
+})
