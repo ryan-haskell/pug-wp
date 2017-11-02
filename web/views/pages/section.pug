@@ -1,1 +1,15 @@
-code=JSON.stringify(page)
+extends /layout.pug
+
+block content
+  section.hero
+    img.hero__image( v-fade-image="'hero__image--ready'" src=page.heroSection.image.url alt=page.heroSection.image.altText )
+    .hero__content.container
+      p
+        a.hero__back-link( href=page.parent.url )
+          i.hero__back-arrow.fa.fa-chevron-left
+          span=`${page.parent.label}`
+      h1.hero__title=page.heroSection.title
+  .container
+    section.section
+      h3.section__title=page.header
+      .section__content!=page.content

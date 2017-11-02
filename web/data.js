@@ -41,6 +41,15 @@ const formatDate = (wpDate) => {
   return `${month} ${dayOfMonth}, ${year}`
 }
 
+const unsluggify = (slug) =>
+  slug.split('-')
+    .filter(word => word !== '')
+    .map(word => {
+      const [firstLetter, ...letters] = word.split('')
+      return [firstLetter.toUpperCase()].concat(letters).join('')
+    })
+    .join(' ')
+
 const transformLink = (link) => ({
   id: link.id,
   url: link.acf.url,
@@ -48,10 +57,18 @@ const transformLink = (link) => ({
   label: link.title.rendered
 })
 
-const transformSection = ({ title, slug, acf }) => ({
+const transformSection = (page) => ({ title, slug, acf }) => ({
   title: title.rendered,
   slug,
   meta: mapMeta(acf),
+  heroSection: {
+    ...mapHero(acf),
+    title: title.rendered
+  },
+  parent: {
+    url: `/${page}`,
+    label: unsluggify(page)
+  },
   preview: acf.previewContent,
   content: acf.content
 })
@@ -187,7 +204,7 @@ const getGeneralSections = (page, sectionIds) =>
   axios.get(`${url}sections/${page}`)
     .then(grabAll)
     .then(filterAndSortByIds(sectionIds))
-    .then(map(transformSection))
+    .then(map(transformSection(page)))
     .catch(rejectWithError('getGeneralSections'))
 
 const getGeneralPageSettings = (pageName) =>
@@ -214,7 +231,7 @@ const getGeneralPageSettings = (pageName) =>
 const getGeneralSectionSettings = (page, section) =>
   axios.get(`${url}sections/${page}?slug=${section}&per_page=1`)
     .then(grabFirst)
-    .then(transformSection)
+    .then(transformSection(page))
     .catch(rejectWithError(`getGeneralSectionSettings: ${page}, ${section}`))
 
 const getSiteSettings = () =>
