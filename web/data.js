@@ -1,10 +1,9 @@
 const axios = require('axios')
-const url = 'http://cms/wp-json/wp/v2/'
-
-// const debug = (prefix) => (thing) => {
-//   console.log(prefix, thing)
-//   return thing
-// }
+const url = process.env.WP_API_URL || 'http://cms/wp-json/wp/v2/'
+const urls = {
+  internal: process.env.INTERNAL_WP_URL || 'http://localhost:8080',
+  external: process.env.EXTERNAL_WP_URL || 'http://localhost:8080'
+}
 
 const grabAll = (res) =>
   (res && res.data)
@@ -29,8 +28,20 @@ const rejectWithError = (prefix) => (reason) =>
 const separateUnitsWithDash = (date) =>
   date.split('').map((num, i) => (i === 4 || i === 6) ? `-${num}` : num).join('')
 
-// const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'Novmeber', 'December']
+const months = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'Novmeber',
+  'December'
+]
 
 // 20151115 --> 2015-11-15
 const formatDate = (wpDate) => {
@@ -96,7 +107,7 @@ const getNavbar = () =>
     .then(populateLinks('links'))
     .then(({ acf }) => ({
       brand: {
-        image: acf['logo.image'],
+        image: acf['logo.image'].split(urls.internal).join(urls.external),
         altText: acf['logo.altText']
       },
       links: acf.links
@@ -117,10 +128,11 @@ const transformBlogPost = ({ id, slug, title, acf }) => ({
   slug,
   title: title.rendered,
   date: formatDate(acf.date),
+  meta: mapMeta(acf),
   excerpt: acf.excerpt,
   content: acf.content,
   image: {
-    url: acf.image,
+    url: acf.image.split(urls.internal).join(urls.external),
     // TODO: Alt text
     altText: 'Post preview image'
   },
@@ -141,7 +153,8 @@ const getBlogPost = (slug) =>
       ...post,
       meta: {
         title: post.title,
-        description: post.description
+        description: post.description,
+        keywords: []
       }
     }))
     .catch(rejectWithError('getBlogPost'))
@@ -155,7 +168,7 @@ const mapMeta = (acf) => ({
 const mapHero = (acf) => ({
   title: acf['hero.title'],
   image: {
-    url: acf['hero.image'],
+    url: acf['hero.image'].split(urls.internal).join(urls.external),
     altText: 'Todo'
   }
 })
@@ -182,7 +195,9 @@ const getBlogLandingSettings = () =>
     .then(grabFirst)
     .then(({ acf }) => ({
       meta: mapMeta(acf),
-      heroSection: mapHero(acf)
+      latestPostLabel: acf.latestPostLabel,
+      latestPostsLabel: acf.latestPostsLabel,
+      loadMorePostsLabel: acf.loadMorePostsLabel
     }))
     .catch(rejectWithError('getBlogLandingSettings'))
 

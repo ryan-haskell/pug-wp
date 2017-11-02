@@ -1,1 +1,16 @@
-code=JSON.stringify(page)
+extends /layout.pug
+
+block content
+  section.hero
+    img.hero__image( v-fade-image="'hero__image--ready'" src=page.image.url alt=page.image.altText )
+    .hero__content.container
+      p
+        a.hero__back-link( href="/blog" )
+          i.hero__back-arrow.fa.fa-chevron-left
+          span=`Back to the blog`
+      h1.hero__title!=page.title
+  .container
+    section.section
+      h3.section__subtitle
+        span=page.date
+      .section__content!=page.content

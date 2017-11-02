@@ -1,1 +1,22 @@
-code=JSON.stringify(page)
+extends /layout.pug
+
+block content
+  - var latestPost = page.latestPosts[0]
+  h1( style="display: none;" )=page.meta.title
+  section.hero
+    img.hero__image( v-fade-image="'hero__image--ready'" src=latestPost.image.url alt=latestPost.image.altText )
+    .hero__content.container
+      p=page.latestPostLabel
+      a.hero__title( href=latestPost.url )=latestPost.title
+  .container
+    section.section
+      h3.section__title=page.latestPostsLabel
+      .card__list
+        each post in page.latestPosts
+          a.card( href=post.url )
+            if post.image
+              .card__image-container
+                img.card__image.image( v-fade-image src=post.image.url alt=post.image.altText )
+            .card__body
+              h4.card__title!=post.title
+              p.card__subtitle.card__subtitle--right=post.date

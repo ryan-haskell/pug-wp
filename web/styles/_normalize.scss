@@ -12,3 +12,12 @@ button {
     background: none;
     border: none;
 }
+
+a {
+    text-decoration: none;
+    color: inherit;
+    transition: opacity .3s;
+    &:hover, &:focus {
+        opacity: .6;
+    }
+}

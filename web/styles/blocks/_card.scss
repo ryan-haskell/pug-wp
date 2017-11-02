@@ -7,6 +7,7 @@
     padding: 0;
     border: solid 1px #ccc;
     transition: box-shadow .3s ease-in-out;
+    box-sizing: border-box;
 
     &__image-container {
         position: relative;
@@ -63,11 +64,22 @@
         box-shadow: 0 4px 8px 0 rgba(100, 100, 100, 0.3);
     }
 
-    @include respond-to(medium) {
+    @include respond-to(small) {
+
+        width: calc(50% - .5rem);
 
         &__list {
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
+        }
+    }
+
+    @include respond-to(medium) {
+
+        width: calc(33% - .5rem);
+
+        &__list {
             .card {
                 box-sizing: border-box;
                 max-width: calc((100% - 2rem) / 3);
